@@ -10,16 +10,14 @@
     CATALOG_PDF: 'assets/katalog-semeynye-kvartiry.pdf' // PDF каталога, тот же домен
   };
 
+  /* Шаг 1 квиза — число спален (планировки на странице не показываем, они только в каталоге).
+     В CRM уходит lot = 2br / 3br / none и lot_label с номерами квартир этой группы. */
   var LOTS = {
-    '2': '№2 · 55,2 м²', '45': '№45 · 56,9 м²', '319': '№319 · 53,9 м²',
-    '250': '№250 · 78,4 м²', '754': '№754 · 79,9 м²', 'none': 'Пока не выбрал(а) — пришлите все'
+    '2br': '2 спальни: №2, №45, №319', '3br': '3 спальни: №250, №754', 'none': 'Пока не решили — все 5 квартир'
   };
   var FORMS = { Q1: 'Получить каталог', F1: 'Записаться на экскурсию' };
-  /* подписи для посетителя (плитки квиза и напоминание о выбранной квартире); в CRM уходит lot_label с номером */
-  var LOT_TITLES = {
-    '2': 'Квартира с 2 спальнями · 55,2 м²', '45': 'Квартира с 2 спальнями · 56,9 м²', '319': 'Квартира с 2 спальнями · 53,9 м²',
-    '250': 'Квартира с 3 спальнями · 78,4 м²', '754': 'Квартира с 3 спальнями · 79,9 м²'
-  };
+  /* подпись для посетителя — напоминание о выборе на шагах 2–4 */
+  var LOT_TITLES = { '2br': '2 спальни + кухня-гостиная', '3br': '3 спальни + кухня-гостиная' };
 
   /* ---------- Метрика: все цели — через goal(name) */
   function goal(name, params) {
@@ -57,7 +55,7 @@
       source_label: CONFIG.SOURCE_LABEL,       // метка «Семейные квартиры»
       form: form,                              // Q1 / F1
       form_name: FORMS[form],                  // название формы
-      lot: lot,                                // 2 / 45 / 319 / 250 / 754 / none
+      lot: lot,                                // 2br / 3br / none
       lot_label: LOTS[lot] || '',
       family: data.family || '',               // ответ квиза, шаг 2
       purchase: data.purchase || '',           // ответ квиза, шаг 3
@@ -187,12 +185,9 @@
     this.countBox.style.visibility = n <= 3 ? 'visible' : 'hidden';
     this.count.textContent = Math.min(n, 3);
     this.progressFill.style.width = (n <= 3 ? n / 3 * 100 - (n === 3 ? 8 : 0) : 100) + '%';
-    var lot = this.val('lot');                                   // выбранная квартира — напоминание на шагах 2–4
-    this.picked.hidden = !(lot && lot !== 'none' && n >= 2 && n <= 4);
-    if (!this.picked.hidden) {
-      this.picked.querySelector('img').src = 'assets/plans/kv' + lot + '-360.webp';
-      this.picked.querySelector('span').textContent = LOT_TITLES[lot];
-    }
+    var lot = this.val('lot');                                   // выбранное число спален — напоминание на шагах 2–4
+    this.picked.hidden = !(lot && LOT_TITLES[lot] && n >= 2 && n <= 4);
+    if (!this.picked.hidden) this.picked.querySelector('span').textContent = LOT_TITLES[lot];
     var cur = this.form.querySelector('[data-step="' + n + '"]');
     var hasAnswer = n <= 3 && !!cur.querySelector('input:checked');
     this.nextRow.hidden = !hasAnswer;
